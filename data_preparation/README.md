@@ -49,3 +49,30 @@ Z:\thorax_nrrd\pneumothorax\000672\000044.nrrd
 ```
 
 If a study folder contains more than one DICOM series, the largest series is converted. Existing NRRD files are skipped so the launcher can safely be run again. A timestamped CSV report is saved in `Z:\thorax_nrrd`.
+
+## Count extracted DICOM files
+
+After the organizer has copied studies into `Z:\thorax_data`, double-click:
+
+```text
+data_preparation\RUN_THORAX_DICOM_COUNT_CHECK.bat
+```
+
+By default it reads:
+
+```text
+Z:\sectra2\spreadsheet\ThoraxLinktoScan_csv.csv
+```
+
+It counts files under each extracted scan folder, for example:
+
+```text
+Z:\thorax_data\pneumothorax\000058\000023\000003.dcm
+```
+
+The checker writes two files into `Z:\thorax_data`:
+
+- `ThoraxLinktoScan_csv_with_count_DICUM.csv`
+- `dicum_count_report_YYYYMMDD_HHMMSS.txt`
+
+The report highlights rows with invalid scan paths, missing extracted folders, empty folders, or low slide counts below 20.

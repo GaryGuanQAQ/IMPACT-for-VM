@@ -41,7 +41,7 @@ def choose_spreadsheet() -> Path | None:
         root = tk.Tk()
         root.withdraw()
         selected = filedialog.askopenfilename(
-            title="Select the thorax spreadsheet",
+            title="Select the spreadsheet with scan_dir and thorax_condition (not DICOM folders)",
             filetypes=[
                 ("Spreadsheet files", "*.xlsx *.xls *.csv"),
                 ("Excel files", "*.xlsx *.xls"),
@@ -55,7 +55,12 @@ def choose_spreadsheet() -> Path | None:
 
 
 def normalise_column_name(name: object) -> str:
-    return str(name).strip().lower().replace(" ", "_")
+    # CSV exports can carry invisible separators or punctuation in headings.
+    column_name = re.sub(r"[^a-z0-9]+", "_", str(name).lower()).strip("_")
+    # The source spreadsheet currently uses this spelling.
+    if column_name == "thorax_conditoin":
+        return "thorax_condition"
+    return column_name
 
 
 def read_rows(spreadsheet: Path) -> Iterable[dict[str, object]]:
@@ -148,8 +153,18 @@ def organise(spreadsheet: Path, source_root: Path, output_root: Path) -> int:
     counts: Counter = Counter()
     skipped: list[str] = []
     seen: set[tuple[str, PurePosixPath]] = set()
+    expected_columns = {"scan_dir", "thorax_condition"}
+    checked_columns = False
 
     for row_number, row in enumerate(read_rows(spreadsheet), start=2):
+        if not checked_columns:
+            missing_columns = expected_columns.difference(row)
+            if missing_columns:
+                print("ERROR: The selected spreadsheet is missing required column(s): " + ", ".join(sorted(missing_columns)))
+                print("Detected columns: " + ", ".join(sorted(str(column) for column in row)))
+                print("Expected columns: scan_dir, thorax_condition")
+                return 2
+            checked_columns = True
         raw_scan_dir = row.get("scan_dir")
         raw_condition = row.get("thorax_condition")
         scan_dir = normalise_scan_dir(raw_scan_dir)
